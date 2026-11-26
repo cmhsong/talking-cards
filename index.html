@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>말하는 그림카드</title>
+<meta name="description" content="그림을 누르면 여자·남자 목소리로 말해 주는 의사소통·국어 학습 카드">
+<meta name="theme-color" content="#2f5bea">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="그림카드">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><img src="icons/icon-192.png" alt=""><span>말하는 그림카드</span></div>
+  <nav class="menu" aria-label="메뉴">
+    <a href="#talk" data-view="talk">💬 말하기</a>
+    <a href="#learn" data-view="learn">📖 낱말 공부</a>
+    <a href="#quiz" data-view="quiz">🎯 듣고 고르기</a>
+    <a href="#make" data-view="make">✏️ 카드 만들기</a>
+    <a href="#print" data-view="print">🖨️ 출력</a>
+  </nav>
+  <button class="install" id="installBtn" type="button">📲 앱 설치</button>
+</header>
+
+<button class="set-toggle" id="setToggle" type="button" aria-expanded="false">⚙️ 설정 열기</button>
+<section class="settings" id="settings" aria-label="설정">
+  <div class="set"><span>🔊 목소리</span>
+    <div class="seg" data-set="voice"><button data-v="f">👩 여자</button><button data-v="m">👨 남자</button></div></div>
+  <div class="set"><span>🖼️ 그림 모양</span>
+    <div class="seg" data-set="style"><button data-v="pic">🖼️ 그림</button><button data-v="dot">👾 도트</button></div></div>
+  <div class="set"><span>🔍 카드 크기</span>
+    <div class="seg" data-set="size"><button data-v="1">작게</button><button data-v="2">보통</button><button data-v="3">크게</button><button data-v="4">아주 크게</button></div></div>
+  <div class="set"><span>👆 누르면 읽기</span>
+    <div class="seg" data-set="read"><button data-v="w">낱말</button><button data-v="s">문장</button></div></div>
+  <div class="set"><span>🔘 스위치 사용</span>
+    <div class="seg" data-set="scan"><button data-v="off">끄기</button><button data-v="on">켜기</button></div></div>
+</section>
+
+<main>
+  <!-- 말하기 -->
+  <section class="view" id="view-talk">
+    <ol class="guide"><li><b>①</b> 아래에서 <b>묶음</b>을 골라요</li><li><b>②</b> <b>그림</b>을 누르면 소리가 나요</li><li><b>③</b> <b>▶ 이어서 말하기</b>로 문장을 들어요</li></ol>
+    <div class="strip" aria-label="문장 띠">
+      <div class="strip-items" id="strip"></div>
+      <div class="strip-btns">
+        <button class="big play" id="stripPlay" data-scan>▶ 이어서 말하기</button>
+        <button class="big" id="stripBack" data-scan>⌫ 하나 지우기</button>
+        <button class="big" id="stripClear" data-scan>🗑️ 모두 지우기</button>
+      </div>
+    </div>
+    <div class="cats" id="catsTalk"></div>
+    <div class="grid" id="gridTalk"></div>
+  </section>
+
+  <!-- 낱말 공부 -->
+  <section class="view" id="view-learn">
+    <ol class="guide"><li><b>①</b> <b>묶음</b>을 골라요</li><li><b>②</b> 그림을 보고 <b>🔊 낱말 · 🔊 문장</b>을 들어요</li><li><b>③</b> <b>◀ ▶</b>로 다음 카드를 봐요</li></ol>
+    <div class="cats" id="catsLearn"></div>
+    <div class="learn">
+      <button class="big nav" id="learnPrev" data-scan aria-label="앞 카드">◀</button>
+      <div class="learn-card" id="learnCard"></div>
+      <button class="big nav" id="learnNext" data-scan aria-label="다음 카드">▶</button>
+    </div>
+  </section>
+
+  <!-- 듣고 고르기 -->
+  <section class="view" id="view-quiz">
+    <ol class="guide"><li><b>①</b> 소리를 잘 들어요 👂</li><li><b>②</b> 맞는 <b>그림</b>을 눌러요</li><li><b>③</b> 맞히면 <b>⭐</b>을 받아요</li></ol>
+    <div class="cats" id="catsQuiz"></div>
+    <div class="quiz-bar">
+      <button class="big play" id="quizHear" data-scan>🔊 다시 듣기</button>
+      <div class="seg" id="quizN"><button data-v="2">2개</button><button data-v="3">3개</button><button data-v="4">4개</button></div>
+      <div class="stars" id="stars" aria-live="polite"></div>
+    </div>
+    <p class="quiz-msg" id="quizMsg" aria-live="polite"></p>
+    <div class="grid quiz-grid" id="gridQuiz"></div>
+  </section>
+
+  <!-- 카드 만들기 -->
+  <section class="view" id="view-make">
+    <ol class="guide"><li><b>①</b> 낱말과 문장을 써요</li><li><b>②</b> 그림을 찾거나 사진을 올려요</li><li><b>③</b> 목소리를 들어 보고 <b>💾 저장</b></li></ol>
+    <div class="make">
+      <form class="panel" id="makeForm" autocomplete="off">
+        <h2 id="makeTitle">새 카드 만들기</h2>
+        <label class="field"><span><i class="step">1</i> 낱말</span><input id="mkWord" required maxlength="20" placeholder="예) 우유"></label>
+        <label class="field"><span><i class="step">2</i> 문장 <em>(없어도 돼요)</em></span><input id="mkSent" maxlength="60" placeholder="예) 우유를 마시고 싶어요."></label>
+        <label class="field"><span><i class="step">3</i> 넣을 묶음</span><select id="mkCat"></select></label>
+        <div class="pick"><p class="pick-title"><i class="step">4</i> 그림 고르기</p>
+          <div class="seg pick-tabs" id="pickTabs">
+            <button type="button" data-v="g">🔎 구글 무료 그림</button>
+            <button type="button" data-v="u">📷 내 사진·그림</button>
+          </div>
+          <div class="pick-pane" id="pickG">
+            <div class="search"><input id="gq" type="search" placeholder="찾을 낱말 (예: 사과, 버스, 웃음)"><button type="button" class="big play" id="gqBtn">🔎 찾기</button></div>
+            <div class="results" id="gResults"></div>
+            <p class="small">구글 Noto 그림 1,900여 개에서 찾아요 (무료 · Apache 2.0).<br>
+              <a id="gWeb" href="https://www.google.com/search?tbm=isch&amp;tbs=il:cl" target="_blank" rel="noopener">구글 이미지에서 무료(CC 라이선스) 그림 더 찾기 ↗</a><br>
+              마음에 드는 그림을 저장해 [내 사진·그림]으로 올리거나, 복사해서 이 화면에 붙여넣으세요(Ctrl+V).</p>
+          </div>
+          <div class="pick-pane" id="pickU" hidden>
+            <label class="upload">🖼️ 파일 고르기 · 📷 사진 찍기<input type="file" id="mkFile" accept="image/*"></label>
+            <p class="small">그림을 복사해서 이 화면에 붙여넣어도 돼요 (Ctrl+V).</p>
+          </div>
+        </div>
+        <p class="pick-title"><i class="step">5</i> 들어 보고 저장하기</p>
+        <div class="form-btns">
+          <button type="button" class="big" id="mkTestF">👩 여자 목소리</button>
+          <button type="button" class="big" id="mkTestM">👨 남자 목소리</button>
+          <button type="submit" class="big play">💾 저장</button>
+          <button type="button" class="big" id="mkCancel" hidden>취소</button>
+        </div>
+      </form>
+      <div class="panel sticky">
+        <h2>👀 미리 보기</h2>
+        <div class="preview" id="mkPreview"></div>
+        <h2>🗂️ 내가 만든 카드 <span class="count" id="myCount"></span></h2>
+        <div class="mylist" id="myList"></div>
+        <div class="form-btns">
+          <button type="button" class="big" id="exportBtn">📤 내보내기</button>
+          <label class="big filebtn">📥 가져오기<input type="file" id="importFile" accept=".json,application/json"></label>
+        </div>
+        <p class="small">만든 카드는 이 기기의 브라우저에 저장돼요. 내보낸 파일을 다른 휴대폰·컴퓨터에서 가져오면 같은 카드를 쓸 수 있어요.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 출력 -->
+  <section class="view" id="view-print">
+    <ol class="guide"><li><b>①</b> 출력할 <b>묶음</b>을 골라요</li><li><b>②</b> 한 장에 넣을 <b>칸 수</b>를 골라요</li><li><b>③</b> <b>🖨️ 출력하기</b>를 눌러요</li></ol>
+    <div class="panel print-opts">
+      <div class="set"><span><i class="step">1</i> 무엇을</span><select id="prWhat"></select></div>
+      <div class="set"><span><i class="step">2</i> 한 장에</span>
+        <div class="seg" id="prLayout"><button data-v="2x2">4칸</button><button data-v="2x3">6칸</button><button data-v="3x4">12칸</button><button data-v="4x5">20칸</button><button data-v="5x6">30칸</button></div></div>
+      <div class="set"><span><i class="step">3</i> 글자</span>
+        <div class="seg" id="prText"><button data-v="w">낱말</button><button data-v="ws">낱말+문장</button><button data-v="n">그림만</button></div></div>
+      <div class="set"><span><i class="step">4</i> 가위선</span>
+        <div class="seg" id="prCut"><button data-v="1">있음</button><button data-v="0">없음</button></div></div>
+      <button class="big play" id="prGo">🖨️ 출력하기</button>
+      <p class="small">A4 세로로 출력돼요. 그림 모양(그림/도트)은 위 설정을 따라요. PDF로 저장하려면 인쇄 창에서 'PDF로 저장'을 고르세요.</p>
+    </div>
+    <div id="printArea"></div>
+  </section>
+</main>
+
+<button class="scan-switch" id="scanSwitch" type="button" hidden>✋ 선택</button>
+
+<dialog id="installDlg">
+  <h2>📲 앱처럼 설치하기</h2>
+  <ul>
+    <li><b>안드로이드 휴대폰·태블릿</b> (크롬): 오른쪽 위 ⋮ → <b>앱 설치</b> 또는 <b>홈 화면에 추가</b></li>
+    <li><b>아이폰·아이패드</b> (사파리): 아래 <b>공유</b> 버튼 → <b>홈 화면에 추가</b></li>
+    <li><b>컴퓨터</b> (크롬·엣지): 주소창 오른쪽 <b>설치</b> 아이콘 또는 메뉴 → <b>앱 설치</b></li>
+  </ul>
+  <p>한 번 열어 두면 인터넷이 없어도 기본 카드와 목소리를 쓸 수 있어요.</p>
+  <form method="dialog"><button class="big play">알겠어요</button></form>
+</dialog>
+
+<footer class="credit">
+  그림: <a href="https://github.com/googlefonts/noto-emoji" target="_blank" rel="noopener">Google Noto Emoji</a> (Apache 2.0) ·
+  낱말 사전: <a href="https://github.com/unicode-org/cldr-json" target="_blank" rel="noopener">Unicode CLDR</a> ·
+  목소리: <a href="https://github.com/rany2/edge-tts" target="_blank" rel="noopener">edge-tts</a> (선희·인준)
+</footer>
+<div class="toast" id="toast" role="status"></div>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

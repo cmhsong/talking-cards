@@ -1,0 +1,17 @@
+{
+  "name": "말하는 그림카드",
+  "short_name": "그림카드",
+  "description": "그림을 누르면 여자·남자 목소리로 말해 주는 의사소통·국어 학습 카드",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f6f7fb",
+  "theme_color": "#2f5bea",
+  "lang": "ko",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

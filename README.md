@@ -1,0 +1,30 @@
+# 말하는 그림카드
+
+지체장애 학생의 일상 의사소통(AAC)과 국어 수업을 돕는 웹 학습지입니다.
+그림을 누르면 **여자·남자 목소리**로 낱말이나 문장을 읽어 줍니다.
+
+**바로 쓰기:** https://cmhsong.github.io/talking-cards/
+
+## 기능
+- **💬 말하기**: 그림을 누르면 소리가 나고, 누른 카드가 문장 띠에 모여 `▶ 이어서 말하기`로 한 번에 들을 수 있음
+- **📖 낱말 공부**: 큰 카드로 낱말·문장 듣기
+- **🎯 듣고 고르기**: 소리를 듣고 맞는 그림 고르기 (2·3·4개 중에서)
+- **✏️ 카드 만들기**: 낱말·문장을 입력하고 구글 Noto 그림(한글 검색), 내 사진, 붙여넣은 그림으로 새 카드 만들기 · 내보내기/가져오기
+- **🖨️ 출력**: A4에 4·6·12·20·30칸으로 카드 출력 (가위선 선택)
+- 설정: 목소리(여자/남자), 그림 모양(그림/👾 도트), 카드 크기 4단계, 누르면 낱말/문장 읽기, **스위치 스캔**(한 개 스위치·스페이스·엔터로 고르기)
+- 휴대폰·태블릿·컴퓨터에 **앱으로 설치**, 설치 후 인터넷 없이 기본 카드 사용
+
+주소 뒤에 설정을 붙여 수업용 링크를 만들 수 있습니다. 예) `?voice=m&size=3&style=dot&cat=food#talk`
+
+## 사용한 오픈 소스
+| 무엇 | 출처 | 라이선스 |
+|---|---|---|
+| 그림 | [googlefonts/noto-emoji](https://github.com/googlefonts/noto-emoji) (3D) | Apache 2.0 |
+| 한글 그림 이름 | [unicode-org/cldr-json](https://github.com/unicode-org/cldr-json) | Unicode License |
+| 목소리 생성 | [rany2/edge-tts](https://github.com/rany2/edge-tts) (선희·인준 음성) | GPL-3.0 (도구만 사용) |
+
+## 카드 고치기 (선생님용)
+1. `tools/vocab.json`에 `[아이디, 낱말, 문장, 이모지코드]`를 추가
+2. `python tools/make_audio.py` → 목소리 파일 생성 (`pip install edge-tts truststore`)
+3. `python tools/make_images.py` → 그림 내려받기 (직접 만든 그림은 `img/아이디.webp`로 넣기)
+4. `python tools/build.py` → `data.js`, `sw.js` 다시 만들기 후 커밋·푸시
