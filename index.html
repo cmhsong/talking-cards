@@ -44,13 +44,25 @@
 <main>
   <!-- 말하기 -->
   <section class="view" id="view-talk">
-    <ol class="guide"><li><b>①</b> 아래에서 <b>묶음</b>을 골라요</li><li><b>②</b> <b>그림</b>을 누르면 소리가 나요</li><li><b>③</b> <b>▶ 이어서 말하기</b>로 문장을 들어요</li></ol>
+    <ol class="guide"><li><b>①</b> 아래에서 <b>묶음</b>을 골라요</li><li><b>②</b> <b>그림</b>을 누르면 소리가 나요</li><li><b>③</b> <b>▶ 이어서 말하기</b>로 문장을 들어요</li><li><b>④</b> <b>📝 문장 고치기</b>로 문장을 다듬어요</li></ol>
     <div class="strip" aria-label="문장 띠">
       <div class="strip-items" id="strip"></div>
       <div class="strip-btns">
         <button class="big play" id="stripPlay" data-scan>▶ 이어서 말하기</button>
         <button class="big" id="stripBack" data-scan>⌫ 하나 지우기</button>
         <button class="big" id="stripClear" data-scan>🗑️ 모두 지우기</button>
+      </div>
+      <div class="strip-tools">
+        <button class="tool" id="stripAdd" data-scan>➕ 낱말 쓰기</button>
+        <button class="tool" id="stripSentence" data-scan>📝 문장 고치기</button>
+        <span class="tool-hint">모인 칸을 누르면 순서를 바꾸거나 고칠 수 있어요</span>
+      </div>
+      <div class="strip-edit" id="stripEdit" hidden>
+        <b>고른 칸</b>
+        <button class="tool" id="stripLeft" data-scan>◀ 앞으로</button>
+        <button class="tool" id="stripRight" data-scan>뒤로 ▶</button>
+        <button class="tool" id="stripFix" data-scan>✏️ 글자 고치기</button>
+        <button class="tool danger" id="stripDel" data-scan>✖ 빼기</button>
       </div>
     </div>
     <div class="cats" id="catsTalk"></div>
@@ -149,6 +161,7 @@
 
 <button class="scan-switch" id="scanSwitch" type="button" hidden>✋ 선택</button>
 
+<dialog id="editDlg"></dialog>
 <dialog id="installDlg">
   <h2>📲 앱처럼 설치하기</h2>
   <ul>

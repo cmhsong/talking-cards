@@ -87,6 +87,24 @@ body.dot .card img, body.dot .chip img, body.dot .learn-card img, body.dot .prev
 .chip img { width: 52px; height: 52px; object-fit: contain; }
 .chip.talking { background: var(--accent-soft); }
 .strip-btns { display: flex; gap: 8px; }
+.chip { border: 3px solid transparent; border-bottom: 5px solid var(--c); cursor: pointer; }
+.chip .t { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip .ic { height: 52px; display: grid; place-items: center; font-size: 30px; }
+.chip.text { background: #f1f5f9; }
+.chip.sel { border-color: var(--hi); background: #fff7e0; box-shadow: 0 0 0 3px rgba(255,184,0,.35); }
+.strip-tools, .strip-edit { flex-basis: 100%; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.strip-edit { background: #fff7e0; border-radius: 12px; padding: 8px 10px; }
+.strip-edit b { font-size: 17px; color: #7a5600; }
+.tool { border: 2px solid var(--line); background: var(--panel); border-radius: 12px; padding: 6px 14px; font-size: 18px; font-weight: 800; min-height: 46px; }
+.tool:disabled { opacity: .4; cursor: default; }
+.tool.danger { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 35%, white); }
+.tool-hint { font-size: 15px; color: var(--muted); }
+.linkbtn { border: 0; background: none; color: var(--accent); font-weight: 800; font-size: 16px; text-decoration: underline; padding: 4px; }
+.edit-form { width: min(520px, 86vw); }
+.edit-form h2 { margin: 0 0 14px; font-size: 24px; }
+.edit-form textarea, .edit-form input { border: 2px solid var(--line); border-radius: 12px; padding: 10px 12px; font-size: 22px; width: 100%; resize: vertical; line-height: 1.4; }
+.edit-form .form-btns.end { justify-content: flex-end; border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px; }
+.edit-err { color: var(--bad); font-weight: 700; min-height: 1em; margin: 4px 0; }
 
 /* 낱말 공부 */
 .learn { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; }

@@ -18,8 +18,16 @@ let custom = store.get('aac.custom', []);
 const saveS = () => store.set('aac.settings', S);
 const saveCustom = () => { if (!store.set('aac.custom', custom)) toast('저장 공간이 부족해요. 사진 카드를 줄여 주세요.'); };
 
+// 기본 카드의 낱말·문장을 고친 내용 { 카드id: { w, s } }
+let edits = store.get('aac.edits', {});
+const saveEdits = () => store.set('aac.edits', edits);
+function applyEdit(x) {
+  const e = edits[x.id]; if (!e) return x;
+  const w = e.w || x.w, s = e.s ?? x.s;
+  return { ...x, w, s, ew: w !== x.w, es: s !== x.s };   // 고친 글은 녹음 대신 읽어 주기로
+}
 function cats() {
-  const list = VOCAB.map(c => ({ ...c, cards: [...c.cards, ...custom.filter(x => x.cat === c.id)] }));
+  const list = VOCAB.map(c => ({ ...c, cards: [...c.cards.map(applyEdit), ...custom.filter(x => x.cat === c.id)] }));
   const mine = custom.filter(x => !VOCAB.some(c => c.id === x.cat));
   if (mine.length) list.push({ ...MINE, cards: mine });
   return list;
@@ -34,16 +42,18 @@ function toast(msg) {
 
 /* ---------- 목소리 ---------- */
 const player = new Audio();
-let speakToken = 0;
+let speakToken = 0, playDone = null;
 function stopAll() {
   speakToken++;
   player.pause();
+  if (playDone) playDone();   // 멈춘 소리를 기다리던 곳도 끝나게
   if ('speechSynthesis' in window) speechSynthesis.cancel();
 }
 function playFile(url, token = speakToken) {
   return new Promise(res => {
     if (token !== speakToken) return res();
-    const done = () => { player.onended = player.onerror = null; res(); };
+    const done = () => { player.onended = player.onerror = null; playDone = null; res(); };
+    playDone = done;
     player.onended = done; player.onerror = done;
     player.src = url;
     player.play().catch(done);
@@ -73,7 +83,7 @@ function tts(text, g = S.voice, token = speakToken) {
 }
 function speakCard(card, kind = S.read, token = speakToken) {
   if (kind === 's' && !card.s) kind = 'w';
-  if (card.audio) return playFile(`audio/${S.voice}/${card.id}_${kind}.mp3`, token);
+  if (card.audio && !(kind === 'w' ? card.ew : card.es)) return playFile(`audio/${S.voice}/${card.id}_${kind}.mp3`, token);
   return tts(kind === 's' ? card.s : card.w, S.voice, token);
 }
 const feedback = name => playFile(`audio/${S.voice}/fb_${name}.mp3`);
@@ -186,41 +196,130 @@ function guard() { const n = Date.now(); if (n - lastTap < 450) return false; la
 async function flash(el, p) { el.classList.add('talking'); await p; el.classList.remove('talking'); }
 
 /* ---------- 말하기 ---------- */
-let strip = [];
+// 문장 띠 한 칸: { card, color, text? }  text가 있으면 그 글을 읽어 줌(직접 쓰거나 고친 글)
+let strip = [], stripSel = -1;
+const TEXT_COLOR = '#94a3b8';
+const itemText = it => it.text ?? (S.read === 's' && it.card.s ? it.card.s : it.card.w);
+const speakItem = (it, tk = speakToken) => it.text != null ? tts(it.text, S.voice, tk) : speakCard(it.card, S.read, tk);
 function renderTalk() {
   renderCats($('#catsTalk'), renderTalk);
   const c = curCat(), g = $('#gridTalk'); g.innerHTML = '';
   c.cards.forEach(card => g.append(cardEl(card, c.color, (cd, el) => {
     if (!guard()) return;
     stopAll(); flash(el, speakCard(cd));
-    strip.push({ card: cd, color: c.color }); if (strip.length > 12) strip.shift(); renderStrip();
+    strip.push({ card: cd, color: c.color }); if (strip.length > 12) strip.shift();
+    stripSel = -1; renderStrip();
   })));
   renderStrip();
 }
 function renderStrip() {
   const box = $('#strip'); box.innerHTML = '';
+  if (stripSel >= strip.length) stripSel = -1;
+  $('#stripEdit').hidden = stripSel < 0;
+  $('#stripSentence').disabled = !strip.length;
   if (!strip.length) { box.innerHTML = '<p class="strip-hint">그림을 누르면 여기에 모여요</p>'; return; }
-  strip.forEach(({ card, color }) => {
-    const ch = document.createElement('button'); ch.type = 'button'; ch.className = 'chip'; ch.style.setProperty('--c', color);
-    const img = document.createElement('img'); setImg(img, card.img);
-    ch.append(img, document.createTextNode(card.w));
-    ch.addEventListener('click', () => { stopAll(); flash(ch, speakCard(card)); });
+  strip.forEach((it, i) => {
+    const ch = document.createElement('button'); ch.type = 'button';
+    ch.className = 'chip' + (i === stripSel ? ' sel' : '') + (it.text != null ? ' text' : '');
+    ch.style.setProperty('--c', it.color);
+    if (it.card) { const img = document.createElement('img'); setImg(img, it.card.img); ch.append(img); }
+    else { const ic = document.createElement('span'); ic.className = 'ic'; ic.textContent = '✏️'; ch.append(ic); }
+    const t = document.createElement('span'); t.className = 't'; t.textContent = it.text ?? it.card.w; ch.append(t);
+    ch.setAttribute('aria-pressed', i === stripSel);
+    ch.addEventListener('click', () => {           // 누르면 고르기(+읽기), 한 번 더 누르면 고르기 풀기
+      stripSel = stripSel === i ? -1 : i; renderStrip();
+      if (stripSel === i) { stopAll(); speakItem(it); }
+    });
     box.append(ch);
   });
-  box.scrollLeft = box.scrollWidth;
+  if (stripSel < 0) box.scrollLeft = box.scrollWidth;
 }
 $('#stripPlay').addEventListener('click', async () => {
   stopAll(); const tk = speakToken, chips = $$('#strip .chip');
   for (let i = 0; i < strip.length; i++) {
     if (tk !== speakToken) break;
     chips[i]?.classList.add('talking');
-    await speakCard(strip[i].card, S.read, tk);
+    await speakItem(strip[i], tk);
     chips[i]?.classList.remove('talking');
     await new Promise(r => setTimeout(r, 120));
   }
 });
-$('#stripBack').addEventListener('click', () => { strip.pop(); renderStrip(); });
-$('#stripClear').addEventListener('click', () => { strip = []; stopAll(); renderStrip(); });
+$('#stripBack').addEventListener('click', () => {
+  if (stripSel >= 0) strip.splice(stripSel, 1); else strip.pop();
+  stripSel = -1; renderStrip();
+});
+$('#stripClear').addEventListener('click', () => { strip = []; stripSel = -1; stopAll(); renderStrip(); });
+$('#stripDel').addEventListener('click', () => { if (stripSel >= 0) { strip.splice(stripSel, 1); stripSel = -1; renderStrip(); } });
+$('#stripLeft').addEventListener('click', () => {
+  if (stripSel <= 0) return;
+  [strip[stripSel - 1], strip[stripSel]] = [strip[stripSel], strip[stripSel - 1]]; stripSel--; renderStrip();
+});
+$('#stripRight').addEventListener('click', () => {
+  if (stripSel < 0 || stripSel >= strip.length - 1) return;
+  [strip[stripSel + 1], strip[stripSel]] = [strip[stripSel], strip[stripSel + 1]]; stripSel++; renderStrip();
+});
+$('#stripFix').addEventListener('click', () => {
+  const it = strip[stripSel]; if (!it) return;
+  openEdit({
+    title: '✏️ 글자 고치기', fields: [{ key: 't', label: '이 칸에서 읽을 말', value: itemText(it) }],
+    onSave: v => { if (!v.t) return '글자를 써 주세요.'; it.text = v.t; renderStrip(); },
+  });
+});
+$('#stripAdd').addEventListener('click', () => openEdit({
+  title: '➕ 낱말 쓰기', okLabel: '✔ 넣기', fields: [{ key: 't', label: '넣을 말 (예: 을, 를, 주세요, 빨리)', value: '' }],
+  onSave: v => {
+    if (!v.t) return '글자를 써 주세요.';
+    const at = stripSel >= 0 ? stripSel + 1 : strip.length;   // 고른 칸 뒤에, 아니면 맨 끝에
+    strip.splice(at, 0, { card: null, color: TEXT_COLOR, text: v.t }); stripSel = -1; renderStrip();
+  },
+}));
+$('#stripSentence').addEventListener('click', () => {
+  if (!strip.length) return;
+  const first = strip.find(it => it.card);
+  openEdit({
+    title: '📝 문장 고치기', okLabel: '✔ 이 문장으로 바꾸기',
+    fields: [{ key: 't', label: '모인 말을 자연스러운 문장으로 고쳐요', value: strip.map(itemText).join(' '), multi: true }],
+    onSave: v => {
+      if (!v.t) return '문장을 써 주세요.';
+      strip = [{ card: first?.card || null, color: first?.color || TEXT_COLOR, text: v.t }]; stripSel = -1; renderStrip();
+    },
+    extra: [{ label: '💾 내 카드로 저장', fn: v => {
+      if (!v.t) return '문장을 써 주세요.';
+      if (!first) return '그림이 있는 카드를 하나 이상 넣어 주세요.';
+      custom.push({ id: 'c' + Date.now().toString(36), w: v.t.length > 12 ? v.t.slice(0, 12) + '…' : v.t, s: v.t, cat: 'mine', img: first.card.img });
+      saveCustom(); toast("'내 카드' 묶음에 저장했어요."); renderTalk();
+    } }],
+  });
+});
+
+/* ---------- 글 고치기 창 (문장 띠·카드 공용) ---------- */
+function openEdit({ title, fields, onSave, extra = [], okLabel = '✔ 고치기' }) {
+  const dlg = $('#editDlg');
+  dlg.innerHTML = `<form method="dialog" class="edit-form"><h2></h2><div class="ef"></div><p class="edit-err" role="alert"></p>
+    <div class="form-btns"><button type="button" class="big" data-g="f">👩 여자 목소리</button><button type="button" class="big" data-g="m">👨 남자 목소리</button></div>
+    <div class="form-btns end"><button type="button" class="big" data-x="cancel">취소</button></div></form>`;
+  $('h2', dlg).textContent = title;
+  const box = $('.ef', dlg);
+  fields.forEach(f => {
+    const l = document.createElement('label'); l.className = 'field';
+    const sp = document.createElement('span'); sp.textContent = f.label;
+    const inp = document.createElement(f.multi ? 'textarea' : 'input');
+    inp.name = f.key; inp.value = f.value || ''; inp.maxLength = f.multi ? 200 : 60; if (f.multi) inp.rows = 3;
+    l.append(sp, inp); box.append(l);
+  });
+  const vals = () => Object.fromEntries(fields.map(f => [f.key, dlg.querySelector(`[name="${f.key}"]`).value.trim()]));
+  const run = fn => { const err = fn(vals()); if (err) { $('.edit-err', dlg).textContent = err; return; } dlg.close(); };
+  const end = $('.form-btns.end', dlg);
+  extra.forEach(x => { const b = document.createElement('button'); b.type = 'button'; b.className = 'big'; b.textContent = x.label; b.onclick = () => run(x.fn); end.append(b); });
+  const ok = document.createElement('button'); ok.type = 'submit'; ok.className = 'big play'; ok.textContent = okLabel; end.append(ok);
+  $('form', dlg).addEventListener('submit', e => { e.preventDefault(); run(onSave); });
+  $('[data-x=cancel]', dlg).onclick = () => dlg.close();
+  $$('[data-g]', dlg).forEach(b => b.onclick = () => {
+    const v = Object.values(vals()).filter(Boolean); stopAll(); tts(v[v.length - 1] || '글자를 써 주세요', b.dataset.g);
+  });
+  dlg.showModal();
+  const first = $('input, textarea', dlg); first.focus(); first.setSelectionRange(first.value.length, first.value.length);
+}
 
 /* ---------- 낱말 공부 ---------- */
 let learnIdx = 0;
@@ -232,12 +331,32 @@ function renderLearn(auto) {
   box.style.setProperty('--c', c.color);
   box.innerHTML = `<img><div class="w"></div><div class="s"></div>
     <div class="btns"><button class="big play" data-k="w" data-scan>🔊 낱말</button><button class="big" data-k="s" data-scan>🔊 문장</button></div>
-    <div class="pos">${learnIdx + 1} / ${c.cards.length}</div>`;
+    <div class="pos">${learnIdx + 1} / ${c.cards.length} · <button type="button" class="linkbtn" data-x="edit">✏️ 글자 고치기</button></div>`;
   setImg($('img', box), card.img);
   $('.w', box).textContent = card.w; $('.s', box).textContent = card.s || '';
   if (!card.s) $('[data-k=s]', box).hidden = true;
   $$('[data-k]', box).forEach(b => b.addEventListener('click', () => { stopAll(); flash(b, speakCard(card, b.dataset.k)); }));
+  $('[data-x=edit]', box).addEventListener('click', () => editCard(card));
   if (auto) { stopAll(); speakCard(card, 'w'); }
+}
+function editCard(card) {
+  const mine = custom.find(x => x.id === card.id);
+  const orig = mine ? null : VOCAB.flatMap(c => c.cards).find(x => x.id === card.id);
+  openEdit({
+    title: '✏️ 카드 글자 고치기',
+    fields: [{ key: 'w', label: '낱말', value: card.w }, { key: 's', label: '문장', value: card.s || '', multi: true }],
+    onSave: v => {
+      if (!v.w) return '낱말을 써 주세요.';
+      if (mine) { mine.w = v.w; mine.s = v.s; saveCustom(); }
+      else {
+        const e = {}; if (v.w !== orig.w) e.w = v.w; if (v.s !== orig.s) e.s = v.s;
+        if (Object.keys(e).length) edits[card.id] = e; else delete edits[card.id];
+        saveEdits();
+      }
+      toast('고쳤어요. 고친 글은 기기 목소리로 읽어 줘요.'); render();
+    },
+    extra: edits[card.id] ? [{ label: '↩ 원래대로', fn: () => { delete edits[card.id]; saveEdits(); toast('원래 글자로 되돌렸어요.'); render(); } }] : [],
+  });
 }
 $('#learnPrev').addEventListener('click', () => { learnIdx--; renderLearn(true); });
 $('#learnNext').addEventListener('click', () => { learnIdx++; renderLearn(true); });
